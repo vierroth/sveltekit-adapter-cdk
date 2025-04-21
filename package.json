@@ -1,71 +1,62 @@
 {
-  "name": "@flit/sveltekit-adapter-cdk",
-  "version": "1.8.2",
-  "description": "SvelteKit adapter for AWS",
-  "keywords": [
-    "aws",
-    "awscdk",
-    "sveltekit"
-  ],
-  "homepage": "https://github.com/jumper-de/sveltekit-adapter-cdk",
-  "bugs": "https://github.com/jumper-de/sveltekit-adapter-cdk/issues",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jumper-de/sveltekit-adapter-cdk.git"
-  },
-  "license": "Apache-2.0g",
-  "author": {
-    "name": "Luis Vierroth",
-    "email": "luis@jumper.de",
-    "url": "https://github.com/p-mercury"
-  },
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "./dist",
-    "./LICENSE.txt",
-    "./README.md"
-  ],
-  "scripts": {
-    "build": "npm run prepack",
-    "prepack": "rm -rf ./dist && tsc -b"
-  },
-  "prettier": {
-    "plugins": [
-      "prettier-plugin-packagejson"
-    ],
-    "tabWidth": 2,
-    "overrides": [
-      {
-        "files": "*.sublime-project",
-        "options": {
-          "parser": "json",
-          "singleQuote": false
-        }
-      }
-    ]
-  },
-  "dependencies": {
-    "@aws-sdk/credential-providers": "^3.712.0",
-    "@jill64/types-lambda": "^1.2.3",
-    "@rollup/plugin-commonjs": "^28.0.2",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^16.0.0",
-    "@sveltejs/kit": "^2.11.1",
-    "@types/aws-lambda": "^8.10.146",
-    "@types/node": "^22.10.2",
-    "aws-cdk-lib": "^2.173.1",
-    "prettier-plugin-packagejson": "^2.5.6",
-    "prettier-plugin-svelte": "^3.3.2",
-    "rollup": "^4.28.1"
-  },
-  "devDependencies": {
-    "prettier": "^3.4.2",
-    "typescript": "^5.7.2"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "stability": "stable"
+	"name": "@flit/sveltekit-adapter-cdk",
+	"version": "1.8.3",
+	"description": "SvelteKit adapter for AWS CDK",
+	"keywords": [
+		"aws",
+		"awscdk",
+		"svelte",
+		"sveltekit"
+	],
+	"homepage": "https://github.com/vierroth/sveltekit-adapter-cdk",
+	"bugs": "https://github.com/vierroth/sveltekit-adapter-cdk/issues",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/vierroth/sveltekit-adapter-cdk.git"
+	},
+	"license": "Apache-2.0",
+	"author": {
+		"name": "Luis Vierroth",
+		"url": "https://github.com/p-mercury"
+	},
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"files": [
+		"./dist",
+		"./LICENSE.txt",
+		"./README.md"
+	],
+	"scripts": {
+		"build": "npm run prepack",
+		"prepack": "rm -rf ./dist && tsc -b"
+	},
+	"prettier": {
+		"plugins": [
+			"prettier-plugin-packagejson"
+		],
+		"useTabs": true
+	},
+	"dependencies": {
+		"@aws-sdk/credential-providers": "^3.787.0",
+		"@jill64/types-lambda": "^1.2.4",
+		"@rollup/plugin-commonjs": "^28.0.3",
+		"@rollup/plugin-json": "^6.1.0",
+		"@rollup/plugin-node-resolve": "^16.0.1",
+		"@sveltejs/kit": "^2.20.7",
+		"@types/aws-lambda": "^8.10.149",
+		"@types/node": "^22.14.1",
+		"aws-cdk-lib": "^2.190.0",
+		"rollup": "^4.40.0"
+	},
+	"devDependencies": {
+		"prettier": "^3.5.3",
+		"prettier-plugin-packagejson": "^2.5.10",
+		"prettier-plugin-svelte": "^3.3.3",
+		"typescript": "^5.8.3"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"stability": "stable"
 }
