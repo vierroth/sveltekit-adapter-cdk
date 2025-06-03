@@ -115,8 +115,8 @@ export class SvelteKit extends Construct {
 			],
 			cacheControl: [
 				CacheControl.setPublic(),
-				CacheControl.maxAge(Duration.days(2)),
-				CacheControl.sMaxAge(Duration.days(2)),
+				CacheControl.maxAge(Duration.days(4)),
+				CacheControl.sMaxAge(Duration.days(4)),
 				CacheControl.fromString("immutable"),
 			],
 		});
@@ -152,8 +152,8 @@ export class SvelteKit extends Construct {
 				],
 				cacheControl: [
 					CacheControl.setPublic(),
-					CacheControl.maxAge(Duration.minutes(2)),
-					CacheControl.sMaxAge(Duration.minutes(2)),
+					CacheControl.maxAge(Duration.minutes(4)),
+					CacheControl.sMaxAge(Duration.minutes(4)),
 				],
 			});
 		}
@@ -193,23 +193,19 @@ export class SvelteKit extends Construct {
 					},
 				],
 			},
-			additionalBehaviors: {
-				"_app/*": {
-					viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-					originRequestPolicy:
-						OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
-					allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
-					origin: clientBucketOrigin,
-				},
-			},
+		});
+
+		this.cloudFront.addBehavior(`${manifest.appDir}/*`, clientBucketOrigin, {
+			viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+			originRequestPolicy: OriginRequestPolicy.CORS_S3_ORIGIN,
+			allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
 		});
 
 		manifest.assets.forEach((asset) => {
 			if (asset.toLowerCase() !== ".ds_store") {
 				this.cloudFront.addBehavior(asset, clientBucketOrigin, {
 					viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-					originRequestPolicy:
-						OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+					originRequestPolicy: OriginRequestPolicy.CORS_S3_ORIGIN,
 					allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
 				});
 			}
@@ -221,8 +217,7 @@ export class SvelteKit extends Construct {
 				prerenderedBucketOrigin,
 				{
 					viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-					originRequestPolicy:
-						OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+					originRequestPolicy: OriginRequestPolicy.CORS_S3_ORIGIN,
 					allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
 				},
 			);
