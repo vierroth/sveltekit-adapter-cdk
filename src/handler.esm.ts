@@ -1,8 +1,5 @@
 import { Server } from "SERVER_DEST";
 import { manifest } from "MANIFEST_DEST";
-import type { awslambda as AwsLambda } from "@jill64/types-lambda";
-
-declare const awslambda: typeof AwsLambda;
 
 const SERVER = new Server(manifest);
 await SERVER.init({ env: process.env as any });
@@ -16,13 +13,13 @@ export const handler = awslambda.streamifyResponse(
 		const body =
 			method === "GET" || method === "DELETE"
 				? undefined
-				: Buffer.from(event.body, encoding as BufferEncoding);
+				: Buffer.from(event.body ?? "", encoding as BufferEncoding);
 		const request = new Request(
 			new URL(
 				`${event.rawPath}?${event.rawQueryString}`,
 				`${event.headers["x-forwarded-proto"]}://${event.headers["x-forwarded-host"]}`,
 			),
-			{ method, body, headers: event.headers },
+			{ method, body, headers: event.headers as any },
 		);
 
 		const response = await SERVER.respond(request, {
