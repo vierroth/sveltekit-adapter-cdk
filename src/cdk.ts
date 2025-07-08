@@ -211,8 +211,27 @@ export class SvelteKit extends Construct {
 			}
 		});
 
+		const rewritePrerenderPath = new Function(this, "RewritePrerenderPath", {
+			code: FunctionCode.fromInline(`
+        function handler(event) {
+        	var request = event.request;
+       		if (request.uri.endsWith('/')) {
+            return request;
+          }
+          request.uri += ".html";
+          return request;
+        }
+      `),
+		});
+
 		prerendered.forEach((asset) => {
 			this.cloudFront.addBehavior(asset, prerenderedBucketOrigin, {
+				functionAssociations: [
+					{
+						eventType: FunctionEventType.VIEWER_REQUEST,
+						function: rewritePrerenderPath,
+					},
+				],
 				viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
 				originRequestPolicy: OriginRequestPolicy.CORS_S3_ORIGIN,
 				allowedMethods: AllowedMethods.ALLOW_GET_HEAD,

@@ -37,9 +37,6 @@ export default function (props: AdapterProps) {
 			builder.writePrerendered(
 				`${out}/prerendered${builder.config.kit.paths.base}`,
 			);
-			restructurePrerendered(
-				`${out}/prerendered${builder.config.kit.paths.base}`,
-			);
 
 			if (precompress) {
 				builder.log.minor("Compressing assets");
@@ -146,21 +143,4 @@ export default function (props: AdapterProps) {
 			});
 		},
 	} satisfies Adapter;
-}
-
-function restructurePrerendered(dir: string) {
-	const entries = readdirSync(dir);
-	for (const entry of entries) {
-		const fullPath = join(dir, entry);
-		if (statSync(fullPath).isDirectory()) {
-			restructurePrerendered(fullPath);
-			continue;
-		}
-		if (entry.endsWith(".html") && entry !== "index.html") {
-			const name = entry.slice(0, -5);
-			const newDir = join(dir, name);
-			mkdirSync(newDir, { recursive: true });
-			renameSync(fullPath, join(newDir, "index.html"));
-		}
-	}
 }
