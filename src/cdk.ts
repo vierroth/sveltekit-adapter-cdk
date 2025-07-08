@@ -212,15 +212,11 @@ export class SvelteKit extends Construct {
 		});
 
 		prerendered.forEach((asset) => {
-			this.cloudFront.addBehavior(
-				asset.replace("/index.html", ""),
-				prerenderedBucketOrigin,
-				{
-					viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-					originRequestPolicy: OriginRequestPolicy.CORS_S3_ORIGIN,
-					allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
-				},
-			);
+			this.cloudFront.addBehavior(asset, prerenderedBucketOrigin, {
+				viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+				originRequestPolicy: OriginRequestPolicy.CORS_S3_ORIGIN,
+				allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
+			});
 		});
 	}
 }

@@ -1,10 +1,18 @@
 import { Adapter } from "@sveltejs/kit";
-import { readFileSync, writeFileSync } from "fs";
+import {
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	renameSync,
+	statSync,
+	writeFileSync,
+} from "fs";
 import { rollup } from "rollup";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import { fileURLToPath } from "url";
+import { join } from "path";
 
 export interface AdapterProps {
 	out?: string;
@@ -27,6 +35,9 @@ export default function (props: AdapterProps) {
 			builder.log.minor("Copying assets");
 			builder.writeClient(`${out}/client${builder.config.kit.paths.base}`);
 			builder.writePrerendered(
+				`${out}/prerendered${builder.config.kit.paths.base}`,
+			);
+			restructurePrerendered(
 				`${out}/prerendered${builder.config.kit.paths.base}`,
 			);
 
@@ -135,4 +146,21 @@ export default function (props: AdapterProps) {
 			});
 		},
 	} satisfies Adapter;
+}
+
+function restructurePrerendered(dir: string) {
+	const entries = readdirSync(dir);
+	for (const entry of entries) {
+		const fullPath = join(dir, entry);
+		if (statSync(fullPath).isDirectory()) {
+			restructurePrerendered(fullPath);
+			continue;
+		}
+		if (entry.endsWith(".html") && entry !== "index.html") {
+			const name = entry.slice(0, -5);
+			const newDir = join(dir, name);
+			mkdirSync(newDir, { recursive: true });
+			renameSync(fullPath, join(newDir, "index.html"));
+		}
+	}
 }
