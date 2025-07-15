@@ -67,15 +67,17 @@ export class SvelteKit extends Construct {
 		this.function = new NodejsFunction(this, "Server", {
 			...props,
 			entry: fileURLToPath(
-				new URL(
-					props.bundling?.format === OutputFormat.ESM
-						? "./server/index.esm.js"
-						: "./server/index.cjs.js",
-					import.meta.url,
-				).href,
+				new URL("./server/index.esm.js", import.meta.url).href,
 			),
 			bundling: {
 				...props.bundling,
+				minify: true,
+				sourcesContent: false,
+				loader: {
+					".node": "file",
+				},
+				externalModules: ["@aws-lambda-powertools"],
+				format: OutputFormat.ESM,
 				mainFields: ["module", "main"],
 				esbuildArgs: {
 					"--conditions": "module",

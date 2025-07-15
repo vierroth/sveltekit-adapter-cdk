@@ -1,17 +1,11 @@
 import { Adapter } from "@sveltejs/kit";
-import {
-	mkdirSync,
-	readdirSync,
-	readFileSync,
-	renameSync,
-	statSync,
-	writeFileSync,
-} from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { rollup } from "rollup";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import { fileURLToPath } from "url";
+import { builtinModules } from "module";
 
 export interface AdapterProps {
 	out?: string;
@@ -84,20 +78,6 @@ export default function (props: AdapterProps) {
 			);
 
 			builder.copy(
-				fileURLToPath(new URL("./handler.cjs.js", import.meta.url).href),
-				`${tmp}/index.cjs.js`,
-				{
-					replace: {
-						ENV_DEST: "./env.js",
-						MANIFEST_DEST: "./server/manifest.js",
-						SERVER_DEST: "./server/index.js",
-						SHIMS_DEST: "./shims.js",
-						ENV_PREFIX_DEST: JSON.stringify(envPrefix),
-					},
-				},
-			);
-
-			builder.copy(
 				fileURLToPath(new URL("./handler.esm.js", import.meta.url).href),
 				`${tmp}/index.esm.js`,
 				{
@@ -115,21 +95,22 @@ export default function (props: AdapterProps) {
 
 			const bundle = await rollup({
 				input: {
-					"index.cjs": `${tmp}/index.cjs.js`,
 					"index.esm": `${tmp}/index.esm.js`,
 					manifest: `${tmp}/server/manifest.js`,
 				},
-				output: {
-					sourcemap: false,
-				},
 				external: [
+					...builtinModules,
 					...Object.keys(pkg.dependencies || {}).map(
 						(d) => new RegExp(`^${d}(\\/.*)?$`),
 					),
 				],
 				plugins: [
 					nodeResolve({ exportConditions: ["node"] }),
-					commonjs({ transformMixedEsModules: true }),
+					commonjs({
+						transformMixedEsModules: false,
+						ignoreDynamicRequires: true,
+						ignoreGlobal: true,
+					}),
 					json(),
 				],
 			});
@@ -137,7 +118,7 @@ export default function (props: AdapterProps) {
 			await bundle.write({
 				dir: `${out}/server`,
 				format: "esm",
-				sourcemap: true,
+				sourcemap: false,
 				chunkFileNames: "chunks/[name]-[hash].js",
 			});
 		},
