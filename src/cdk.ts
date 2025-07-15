@@ -10,6 +10,8 @@ import {
 	FunctionEventType,
 	FunctionCode,
 	Function,
+	FunctionUrlOriginAccessControl,
+	Signing,
 } from "aws-cdk-lib/aws-cloudfront";
 import type { ICertificate } from "aws-cdk-lib/aws-certificatemanager";
 import {
@@ -81,11 +83,7 @@ export class SvelteKit extends Construct {
 			},
 		});
 
-		const version = this.function.currentVersion;
-		this.functionAlias = new Alias(this, "Alias", {
-			aliasName: "live",
-			version,
-		});
+		this.functionAlias = this.function.addAlias("Live");
 
 		const clientBucket = new Bucket(this, "ClientBucket", {
 			removalPolicy: RemovalPolicy.DESTROY,
@@ -172,9 +170,9 @@ export class SvelteKit extends Construct {
 				originRequestPolicy: OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
 				allowedMethods: AllowedMethods.ALLOW_ALL,
 				cachePolicy: CachePolicy.CACHING_DISABLED,
-				origin: new FunctionUrlOrigin(
+				origin: FunctionUrlOrigin.withOriginAccessControl(
 					this.functionAlias.addFunctionUrl({
-						authType: FunctionUrlAuthType.NONE,
+						authType: FunctionUrlAuthType.AWS_IAM,
 						invokeMode: InvokeMode.RESPONSE_STREAM,
 					}),
 				),
