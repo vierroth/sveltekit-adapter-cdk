@@ -12,7 +12,6 @@ import { nodeResolve } from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import { fileURLToPath } from "url";
-import { join } from "path";
 
 export interface AdapterProps {
 	out?: string;
@@ -129,8 +128,8 @@ export default function (props: AdapterProps) {
 					),
 				],
 				plugins: [
-					nodeResolve({ preferBuiltins: true, exportConditions: ["node"] }),
-					commonjs({ strictRequires: true }),
+					nodeResolve({ exportConditions: ["node"] }),
+					commonjs(),
 					json(),
 				],
 			});
