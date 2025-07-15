@@ -129,7 +129,7 @@ export default function (props: AdapterProps) {
 				],
 				plugins: [
 					nodeResolve({ exportConditions: ["node"] }),
-					commonjs(),
+					commonjs({ transformMixedEsModules: true }),
 					json(),
 				],
 			});
