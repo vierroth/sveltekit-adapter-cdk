@@ -76,7 +76,7 @@ export class SvelteKit extends Construct {
 				loader: {
 					".node": "file",
 				},
-				externalModules: ["@aws-lambda-powertools"],
+				target: "esnext",
 				format: OutputFormat.ESM,
 				mainFields: ["module", "main"],
 				esbuildArgs: {
