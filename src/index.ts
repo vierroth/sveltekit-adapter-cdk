@@ -1,11 +1,6 @@
 import { Adapter } from "@sveltejs/kit";
-import { readFileSync, writeFileSync } from "fs";
-import { rollup } from "rollup";
-import { nodeResolve } from "@rollup/plugin-node-resolve";
-import commonjs from "@rollup/plugin-commonjs";
-import json from "@rollup/plugin-json";
+import { writeFileSync } from "fs";
 import { fileURLToPath } from "url";
-import { builtinModules } from "module";
 
 export interface AdapterProps {
 	out?: string;
@@ -40,10 +35,9 @@ export default function (props: AdapterProps) {
 			}
 
 			builder.log.minor("Building server");
-
-			builder.writeServer(`${tmp}/server`);
+			builder.writeServer(`${out}/server`);
 			writeFileSync(
-				`${tmp}/server/manifest.js`,
+				`${out}/server/manifest.js`,
 				[
 					`export const manifest = ${builder.generateManifest({
 						relativePath: "./",
@@ -55,6 +49,18 @@ export default function (props: AdapterProps) {
 						builder.config.kit.paths.base,
 					)};`,
 				].join("\n\n"),
+			);
+
+			builder.copy(
+				fileURLToPath(new URL("./handler.esm.js", import.meta.url).href),
+				`${out}/server/index.esm.js`,
+				{
+					replace: {
+						MANIFEST_DEST: "./manifest.js",
+						SERVER_DEST: "./index.js",
+						ENV_PREFIX_DEST: JSON.stringify(envPrefix),
+					},
+				},
 			);
 
 			builder.copy(
@@ -76,51 +82,6 @@ export default function (props: AdapterProps) {
 					},
 				},
 			);
-
-			builder.copy(
-				fileURLToPath(new URL("./handler.esm.js", import.meta.url).href),
-				`${tmp}/index.esm.js`,
-				{
-					replace: {
-						ENV_DEST: "./env.js",
-						MANIFEST_DEST: "./server/manifest.js",
-						SERVER_DEST: "./server/index.js",
-						SHIMS_DEST: "./shims.js",
-						ENV_PREFIX_DEST: JSON.stringify(envPrefix),
-					},
-				},
-			);
-
-			const pkg = JSON.parse(readFileSync("package.json", "utf8"));
-
-			const bundle = await rollup({
-				input: {
-					"index.esm": `${tmp}/index.esm.js`,
-					manifest: `${tmp}/server/manifest.js`,
-				},
-				external: [
-					...builtinModules,
-					...Object.keys(pkg.dependencies || {}).map(
-						(d) => new RegExp(`^${d}(\\/.*)?$`),
-					),
-				],
-				plugins: [
-					nodeResolve({ exportConditions: ["node"] }),
-					commonjs({
-						transformMixedEsModules: false,
-						ignoreDynamicRequires: true,
-						ignoreGlobal: true,
-					}),
-					json(),
-				],
-			});
-
-			await bundle.write({
-				dir: `${out}/server`,
-				format: "esm",
-				sourcemap: false,
-				chunkFileNames: "chunks/[name]-[hash].js",
-			});
 		},
 	} satisfies Adapter;
 }

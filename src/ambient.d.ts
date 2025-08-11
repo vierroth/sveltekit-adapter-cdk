@@ -4,7 +4,7 @@ declare module "ENV_DEST" {
 
 declare module "MANIFEST_DEST" {
 	import { SSRManifest } from "@sveltejs/kit";
-
+	export const base: string;
 	export const manifest: SSRManifest;
 	export const prerendered: Set<string>;
 }
