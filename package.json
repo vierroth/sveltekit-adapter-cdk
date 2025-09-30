@@ -1,6 +1,6 @@
 {
 	"name": "@flit/sveltekit-adapter-cdk",
-	"version": "1.17.0",
+	"version": "1.18.0",
 	"description": "SvelteKit adapter for AWS CDK",
 	"keywords": [
 		"aws",
@@ -47,10 +47,10 @@
 		"useTabs": true
 	},
 	"dependencies": {
-		"@sveltejs/kit": "^2.27.3",
+		"@sveltejs/kit": "^2.43.5",
 		"@types/aws-lambda": "^8.10.152",
-		"@types/node": "^24.2.1",
-		"aws-cdk-lib": "^2.200.0"
+		"@types/node": "^24.6.0",
+		"aws-cdk-lib": "^2.218.0"
 	},
 	"devDependencies": {
 		"prettier": "^3.6.2",
