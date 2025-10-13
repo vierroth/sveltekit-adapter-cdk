@@ -53,7 +53,19 @@ export default function (props: AdapterProps) {
 
 			builder.copy(
 				fileURLToPath(new URL("./handler.esm.js", import.meta.url).href),
-				`${out}/server/index.esm.js`,
+				`${out}/server/handler.esm.js`,
+				{
+					replace: {
+						MANIFEST_DEST: "./manifest.js",
+						SERVER_DEST: "./index.js",
+						ENV_PREFIX_DEST: JSON.stringify(envPrefix),
+					},
+				},
+			);
+
+			builder.copy(
+				fileURLToPath(new URL("./edge-handler.esm.js", import.meta.url).href),
+				`${out}/server/edge-handler.esm.js`,
 				{
 					replace: {
 						MANIFEST_DEST: "./manifest.js",
