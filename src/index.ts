@@ -13,6 +13,9 @@ export default function (props: AdapterProps) {
 
 	return {
 		name: "@flit/sveltekit-adapter-cdk",
+		supports: {
+			instrumentation: () => true,
+		},
 		async adapt(builder) {
 			const tmp = builder.getBuildDirectory("adapter-cdk");
 
@@ -36,6 +39,18 @@ export default function (props: AdapterProps) {
 
 			builder.log.minor("Building server");
 			builder.writeServer(`${out}/server`);
+
+			if (builder.hasServerInstrumentationFile()) {
+				builder.log.minor("Wiring server instrumentation");
+
+				builder.instrument({
+					entrypoint: `${out}/server/index.js`,
+					instrumentation: `${out}/server/instrumentation.server.js`,
+					start: "index.start.js",
+					module: { exports: ["Server"] },
+				});
+			}
+
 			writeFileSync(
 				`${out}/server/manifest.js`,
 				[
