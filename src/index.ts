@@ -46,7 +46,6 @@ export default function (props: AdapterProps) {
 				builder.instrument({
 					entrypoint: `${out}/server/index.js`,
 					instrumentation: `${out}/server/instrumentation.server.js`,
-					start: "index.start.js",
 					module: { exports: ["Server"] },
 				});
 			}

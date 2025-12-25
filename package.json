@@ -1,6 +1,6 @@
 {
 	"name": "@flit/sveltekit-adapter-cdk",
-	"version": "2.1.0",
+	"version": "2.1.1",
 	"description": "SvelteKit adapter for AWS CDK",
 	"keywords": [
 		"aws",

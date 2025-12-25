@@ -6,5 +6,10 @@ export default {
 	kit: {
 		outDir: "dist/.svelte-kit",
 		adapter: adapterCdk({ out: "./dist/cdk" }),
+		experimental: {
+			instrumentation: {
+				server: true,
+			},
+		},
 	},
 };
