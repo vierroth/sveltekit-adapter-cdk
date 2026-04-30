@@ -175,9 +175,13 @@ export class SvelteKit extends Construct {
 		const rewritePrerenderPath = new Function(this, "RewritePrerenderPath", {
 			code: FunctionCode.fromInline(`
         function handler(event) {
-        	var request = event.request;
-       		if (request.uri.endsWith('/')) {
+          var request = event.request;
+          var lastSegment = request.uri.split('/').pop();
+          if (lastSegment && lastSegment.includes('.')) {
             return request;
+          }
+          if (request.uri.endsWith('/')) {
+            request.uri += "index";
           }
           request.uri += ".html";
           return request;
@@ -340,9 +344,13 @@ export class SvelteKitEdge extends Construct {
 		const rewritePrerenderPath = new Function(this, "RewritePrerenderPath", {
 			code: FunctionCode.fromInline(`
         function handler(event) {
-        	var request = event.request;
-       		if (request.uri.endsWith('/')) {
+          var request = event.request;
+          var lastSegment = request.uri.split('/').pop();
+          if (lastSegment && lastSegment.includes('.')) {
             return request;
+          }
+          if (request.uri.endsWith('/')) {
+            request.uri += "index";
           }
           request.uri += ".html";
           return request;
