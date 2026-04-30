@@ -5,11 +5,10 @@ import { fileURLToPath } from "url";
 export interface AdapterProps {
 	out?: string;
 	precompress?: boolean;
-	envPrefix?: string;
 }
 
 export default function (props: AdapterProps) {
-	const { out = "./dist", precompress = false, envPrefix = "" } = props;
+	const { out = "./dist", precompress = false } = props;
 
 	return {
 		name: "@flit/sveltekit-adapter-cdk",
@@ -72,7 +71,6 @@ export default function (props: AdapterProps) {
 					replace: {
 						MANIFEST_DEST: "./manifest.js",
 						SERVER_DEST: "./index.js",
-						ENV_PREFIX_DEST: JSON.stringify(envPrefix),
 					},
 				},
 			);
@@ -84,7 +82,6 @@ export default function (props: AdapterProps) {
 					replace: {
 						MANIFEST_DEST: "./manifest.js",
 						SERVER_DEST: "./index.js",
-						ENV_PREFIX_DEST: JSON.stringify(envPrefix),
 					},
 				},
 			);

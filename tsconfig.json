@@ -1,8 +1,11 @@
 {
 	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		"types": ["node"],
+
 		"target": "esnext",
 		"module": "esnext",
-		"outDir": "./dist",
 		"declaration": true,
 		"strict": true,
 		"noImplicitAny": true,
@@ -17,8 +20,7 @@
 		"inlineSources": true,
 		"strictPropertyInitialization": false,
 		"skipLibCheck": true,
-		"esModuleInterop": true,
-		"moduleResolution": "node"
+		"esModuleInterop": true
 	},
 	"include": ["src"]
 }

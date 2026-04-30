@@ -15,15 +15,9 @@ import {
 import type { ICertificate } from "aws-cdk-lib/aws-certificatemanager";
 import {
 	FunctionUrlOrigin,
-	S3StaticWebsiteOrigin,
+	S3BucketOrigin,
 } from "aws-cdk-lib/aws-cloudfront-origins";
-import {
-	BlockPublicAccess,
-	Bucket,
-	BucketAccessControl,
-	HttpMethods,
-	ObjectOwnership,
-} from "aws-cdk-lib/aws-s3";
+import { Bucket } from "aws-cdk-lib/aws-s3";
 import {
 	BundlingOptions,
 	NodejsFunction,
@@ -89,26 +83,10 @@ export class SvelteKit extends Construct {
 		const clientBucket = new Bucket(this, "ClientBucket", {
 			removalPolicy: RemovalPolicy.DESTROY,
 			autoDeleteObjects: true,
-			websiteIndexDocument: "index.html",
-			publicReadAccess: true,
-			objectOwnership: ObjectOwnership.OBJECT_WRITER,
-			blockPublicAccess: new BlockPublicAccess({
-				blockPublicAcls: false,
-				blockPublicPolicy: false,
-				ignorePublicAcls: false,
-				restrictPublicBuckets: false,
-			}),
-			cors: [
-				{
-					allowedMethods: [HttpMethods.GET, HttpMethods.HEAD],
-					allowedOrigins: ["*"],
-				},
-			],
 		});
 
 		new BucketDeployment(this, "ClientBucketDeployment", {
 			destinationBucket: clientBucket,
-			accessControl: BucketAccessControl.PUBLIC_READ,
 			sources: [
 				Source.asset(fileURLToPath(new URL("./client", import.meta.url).href)),
 			],
@@ -123,27 +101,11 @@ export class SvelteKit extends Construct {
 		const prerenderedBucket = new Bucket(this, "PrerenderedBucket", {
 			removalPolicy: RemovalPolicy.DESTROY,
 			autoDeleteObjects: true,
-			websiteIndexDocument: "index.html",
-			publicReadAccess: true,
-			objectOwnership: ObjectOwnership.OBJECT_WRITER,
-			blockPublicAccess: new BlockPublicAccess({
-				blockPublicAcls: false,
-				blockPublicPolicy: false,
-				ignorePublicAcls: false,
-				restrictPublicBuckets: false,
-			}),
-			cors: [
-				{
-					allowedMethods: [HttpMethods.GET, HttpMethods.HEAD],
-					allowedOrigins: ["*"],
-				},
-			],
 		});
 
 		if (prerendered.size) {
 			new BucketDeployment(this, "PrerenderedBucketDeployment", {
 				destinationBucket: prerenderedBucket,
-				accessControl: BucketAccessControl.PUBLIC_READ,
 				sources: [
 					Source.asset(
 						fileURLToPath(new URL("./prerendered", import.meta.url).href),
@@ -157,10 +119,10 @@ export class SvelteKit extends Construct {
 			});
 		}
 
-		const clientBucketOrigin = new S3StaticWebsiteOrigin(clientBucket);
-		const prerenderedBucketOrigin = new S3StaticWebsiteOrigin(
-			prerenderedBucket,
-		);
+		const clientBucketOrigin =
+			S3BucketOrigin.withOriginAccessControl(clientBucket);
+		const prerenderedBucketOrigin =
+			S3BucketOrigin.withOriginAccessControl(prerenderedBucket);
 
 		this.cloudFront = new Distribution(this, "CloudFront", {
 			domainNames: props.domainNames,
@@ -284,26 +246,10 @@ export class SvelteKitEdge extends Construct {
 		const clientBucket = new Bucket(this, "ClientBucket", {
 			removalPolicy: RemovalPolicy.DESTROY,
 			autoDeleteObjects: true,
-			websiteIndexDocument: "index.html",
-			publicReadAccess: true,
-			objectOwnership: ObjectOwnership.OBJECT_WRITER,
-			blockPublicAccess: new BlockPublicAccess({
-				blockPublicAcls: false,
-				blockPublicPolicy: false,
-				ignorePublicAcls: false,
-				restrictPublicBuckets: false,
-			}),
-			cors: [
-				{
-					allowedMethods: [HttpMethods.GET, HttpMethods.HEAD],
-					allowedOrigins: ["*"],
-				},
-			],
 		});
 
 		new BucketDeployment(this, "ClientBucketDeployment", {
 			destinationBucket: clientBucket,
-			accessControl: BucketAccessControl.PUBLIC_READ,
 			sources: [
 				Source.asset(fileURLToPath(new URL("./client", import.meta.url).href)),
 			],
@@ -318,27 +264,11 @@ export class SvelteKitEdge extends Construct {
 		const prerenderedBucket = new Bucket(this, "PrerenderedBucket", {
 			removalPolicy: RemovalPolicy.DESTROY,
 			autoDeleteObjects: true,
-			websiteIndexDocument: "index.html",
-			publicReadAccess: true,
-			objectOwnership: ObjectOwnership.OBJECT_WRITER,
-			blockPublicAccess: new BlockPublicAccess({
-				blockPublicAcls: false,
-				blockPublicPolicy: false,
-				ignorePublicAcls: false,
-				restrictPublicBuckets: false,
-			}),
-			cors: [
-				{
-					allowedMethods: [HttpMethods.GET, HttpMethods.HEAD],
-					allowedOrigins: ["*"],
-				},
-			],
 		});
 
 		if (prerendered.size) {
 			new BucketDeployment(this, "PrerenderedBucketDeployment", {
 				destinationBucket: prerenderedBucket,
-				accessControl: BucketAccessControl.PUBLIC_READ,
 				sources: [
 					Source.asset(
 						fileURLToPath(new URL("./prerendered", import.meta.url).href),
@@ -352,10 +282,10 @@ export class SvelteKitEdge extends Construct {
 			});
 		}
 
-		const clientBucketOrigin = new S3StaticWebsiteOrigin(clientBucket);
-		const prerenderedBucketOrigin = new S3StaticWebsiteOrigin(
-			prerenderedBucket,
-		);
+		const clientBucketOrigin =
+			S3BucketOrigin.withOriginAccessControl(clientBucket);
+		const prerenderedBucketOrigin =
+			S3BucketOrigin.withOriginAccessControl(prerenderedBucket);
 
 		this.cloudFront = new Distribution(this, "CloudFront", {
 			domainNames: props.domainNames,
