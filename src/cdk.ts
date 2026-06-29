@@ -88,6 +88,7 @@ export class SvelteKit extends Construct {
 		new BucketDeployment(this, "ClientBucketDeployment", {
 			destinationBucket: clientBucket,
 			ephemeralStorageSize: Size.gibibytes(5),
+			memoryLimit: 1024,
 			sources: [
 				Source.asset(fileURLToPath(new URL("./client", import.meta.url).href)),
 			],
@@ -108,6 +109,7 @@ export class SvelteKit extends Construct {
 			new BucketDeployment(this, "PrerenderedBucketDeployment", {
 				destinationBucket: prerenderedBucket,
 				ephemeralStorageSize: Size.gibibytes(5),
+				memoryLimit: 1024,
 				sources: [
 					Source.asset(
 						fileURLToPath(new URL("./prerendered", import.meta.url).href),
@@ -256,6 +258,7 @@ export class SvelteKitEdge extends Construct {
 		new BucketDeployment(this, "ClientBucketDeployment", {
 			destinationBucket: clientBucket,
 			ephemeralStorageSize: Size.gibibytes(5),
+			memoryLimit: 1024,
 			sources: [
 				Source.asset(fileURLToPath(new URL("./client", import.meta.url).href)),
 			],
@@ -276,6 +279,7 @@ export class SvelteKitEdge extends Construct {
 			new BucketDeployment(this, "PrerenderedBucketDeployment", {
 				destinationBucket: prerenderedBucket,
 				ephemeralStorageSize: Size.gibibytes(5),
+				memoryLimit: 1024,
 				sources: [
 					Source.asset(
 						fileURLToPath(new URL("./prerendered", import.meta.url).href),
