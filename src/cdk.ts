@@ -1,5 +1,5 @@
 import { Construct } from "constructs";
-import { Duration, RemovalPolicy } from "aws-cdk-lib";
+import { Duration, RemovalPolicy, Size } from "aws-cdk-lib";
 import {
 	Distribution,
 	ViewerProtocolPolicy,
@@ -87,6 +87,7 @@ export class SvelteKit extends Construct {
 
 		new BucketDeployment(this, "ClientBucketDeployment", {
 			destinationBucket: clientBucket,
+			ephemeralStorageSize: Size.gibibytes(5),
 			sources: [
 				Source.asset(fileURLToPath(new URL("./client", import.meta.url).href)),
 			],
@@ -106,6 +107,7 @@ export class SvelteKit extends Construct {
 		if (prerendered.size) {
 			new BucketDeployment(this, "PrerenderedBucketDeployment", {
 				destinationBucket: prerenderedBucket,
+				ephemeralStorageSize: Size.gibibytes(5),
 				sources: [
 					Source.asset(
 						fileURLToPath(new URL("./prerendered", import.meta.url).href),
@@ -226,7 +228,6 @@ export class SvelteKitEdge extends Construct {
 		this.function = new NodejsFunction(this, "Server", {
 			...props,
 			architecture: Architecture.X86_64,
-			environment: undefined,
 			tracing: Tracing.DISABLED,
 			entry: fileURLToPath(
 				new URL("./server/edge-handler.esm.js", import.meta.url).href,
@@ -254,6 +255,7 @@ export class SvelteKitEdge extends Construct {
 
 		new BucketDeployment(this, "ClientBucketDeployment", {
 			destinationBucket: clientBucket,
+			ephemeralStorageSize: Size.gibibytes(5),
 			sources: [
 				Source.asset(fileURLToPath(new URL("./client", import.meta.url).href)),
 			],
@@ -273,6 +275,7 @@ export class SvelteKitEdge extends Construct {
 		if (prerendered.size) {
 			new BucketDeployment(this, "PrerenderedBucketDeployment", {
 				destinationBucket: prerenderedBucket,
+				ephemeralStorageSize: Size.gibibytes(5),
 				sources: [
 					Source.asset(
 						fileURLToPath(new URL("./prerendered", import.meta.url).href),
