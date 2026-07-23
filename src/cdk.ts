@@ -11,6 +11,10 @@ import {
 	FunctionCode,
 	Function,
 	LambdaEdgeEventType,
+	OriginRequestHeaderBehavior,
+	OriginRequestQueryStringBehavior,
+	OriginRequestCookieBehavior,
+	CfnOriginRequestPolicy,
 } from "aws-cdk-lib/aws-cloudfront";
 import type { ICertificate } from "aws-cdk-lib/aws-certificatemanager";
 import {
@@ -96,7 +100,7 @@ export class SvelteKit extends Construct {
 				CacheControl.setPublic(),
 				CacheControl.maxAge(Duration.days(4)),
 				CacheControl.sMaxAge(Duration.days(4)),
-				CacheControl.fromString("immutable"),
+				CacheControl.immutable(),
 			],
 		});
 
@@ -266,7 +270,7 @@ export class SvelteKitEdge extends Construct {
 				CacheControl.setPublic(),
 				CacheControl.maxAge(Duration.days(4)),
 				CacheControl.sMaxAge(Duration.days(4)),
-				CacheControl.fromString("immutable"),
+				CacheControl.immutable(),
 			],
 		});
 
@@ -304,7 +308,27 @@ export class SvelteKitEdge extends Construct {
 			httpVersion: HttpVersion.HTTP2_AND_3,
 			defaultBehavior: {
 				viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-				originRequestPolicy: OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+				originRequestPolicy: OriginRequestPolicy.fromOriginRequestPolicyId(
+					this,
+					"AllViewerExceptHostHeaderRef",
+					new CfnOriginRequestPolicy(this, "AllViewerExceptHostHeader", {
+						originRequestPolicyConfig: {
+							name: `${id}-AllViewerExceptHostHeader`,
+							comment:
+								"Forwards all viewer request data except the Host header",
+							headersConfig: {
+								headerBehavior: "allExcept",
+								headers: ["host"],
+							},
+							cookiesConfig: {
+								cookieBehavior: "all",
+							},
+							queryStringsConfig: {
+								queryStringBehavior: "all",
+							},
+						},
+					}).attrId,
+				),
 				allowedMethods: AllowedMethods.ALLOW_ALL,
 				cachePolicy: CachePolicy.CACHING_DISABLED,
 				origin: clientBucketOrigin,
