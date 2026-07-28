@@ -1,5 +1,5 @@
 import { Construct } from "constructs";
-import { Duration, RemovalPolicy, Size } from "aws-cdk-lib";
+import { Duration, RemovalPolicy, Size, Stack } from "aws-cdk-lib";
 import {
 	Distribution,
 	ViewerProtocolPolicy,
@@ -11,9 +11,6 @@ import {
 	FunctionCode,
 	Function,
 	LambdaEdgeEventType,
-	OriginRequestHeaderBehavior,
-	OriginRequestQueryStringBehavior,
-	OriginRequestCookieBehavior,
 	CfnOriginRequestPolicy,
 } from "aws-cdk-lib/aws-cloudfront";
 import type { ICertificate } from "aws-cdk-lib/aws-certificatemanager";
@@ -313,7 +310,9 @@ export class SvelteKitEdge extends Construct {
 					"AllViewerExceptHostHeaderRef",
 					new CfnOriginRequestPolicy(this, "AllViewerExceptHostHeader", {
 						originRequestPolicyConfig: {
-							name: `${id}-AllViewerExceptHostHeader`,
+							name: `${Stack.of(this).stackName}${
+								Stack.of(this).region
+							}${id}AllViewerExceptHostHeader`.slice(0, 128),
 							comment:
 								"Forwards all viewer request data except the Host header",
 							headersConfig: {
