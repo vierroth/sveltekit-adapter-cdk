@@ -66,11 +66,12 @@ export class SvelteKit extends Construct {
 			bundling: {
 				...props.bundling,
 				minify: true,
+				sourceMap: false,
 				sourcesContent: false,
+				metafile: true,
 				loader: {
 					".node": "file",
 				},
-				target: "esnext",
 				format: OutputFormat.ESM,
 				mainFields: ["module", "main"],
 				esbuildArgs: {
@@ -238,11 +239,12 @@ export class SvelteKitEdge extends Construct {
 			bundling: {
 				...props.bundling,
 				minify: true,
+				sourceMap: false,
 				sourcesContent: false,
+				metafile: true,
 				loader: {
 					".node": "file",
 				},
-				target: "esnext",
 				format: OutputFormat.ESM,
 				mainFields: ["module", "main"],
 				esbuildArgs: {
