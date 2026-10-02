@@ -1,5 +1,5 @@
 {
-	"extends": "./dist/.svelte-kit/tsconfig.json",
+	"extends": "$app/tsconfig",
 	"compilerOptions": {
 		"allowJs": true,
 		"checkJs": true,

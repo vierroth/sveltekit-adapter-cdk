@@ -3,14 +3,14 @@ declare module "ENV_DEST" {
 }
 
 declare module "MANIFEST_DEST" {
-	import { SSRManifest } from "@sveltejs/kit";
 	export const base: string;
-	export const manifest: SSRManifest;
+	export const appPath: string;
+	export const assets: string[];
 	export const prerendered: Set<string>;
 }
 
 declare module "SERVER_DEST" {
-	export { Server } from "@sveltejs/kit";
+	export const server: import("@sveltejs/kit").Server;
 }
 
 declare namespace App {

@@ -1,17 +1,17 @@
 import { Construct } from "constructs";
 import { Duration, RemovalPolicy, Size, Stack } from "aws-cdk-lib";
 import {
-	Distribution,
-	ViewerProtocolPolicy,
-	OriginRequestPolicy,
 	AllowedMethods,
 	CachePolicy,
-	HttpVersion,
-	FunctionEventType,
-	FunctionCode,
-	Function,
-	LambdaEdgeEventType,
 	CfnOriginRequestPolicy,
+	Distribution,
+	Function,
+	FunctionCode,
+	FunctionEventType,
+	HttpVersion,
+	LambdaEdgeEventType,
+	OriginRequestPolicy,
+	ViewerProtocolPolicy,
 } from "aws-cdk-lib/aws-cloudfront";
 import type { ICertificate } from "aws-cdk-lib/aws-certificatemanager";
 import {
@@ -20,9 +20,9 @@ import {
 } from "aws-cdk-lib/aws-cloudfront-origins";
 import { Bucket } from "aws-cdk-lib/aws-s3";
 import {
-	BundlingOptions,
 	NodejsFunction,
 	OutputFormat,
+	type BundlingOptions,
 } from "aws-cdk-lib/aws-lambda-nodejs";
 import {
 	BucketDeployment,
@@ -32,16 +32,16 @@ import {
 import {
 	Alias,
 	Architecture,
-	FunctionOptions,
 	FunctionUrlAuthType,
 	InvokeMode,
 	Runtime,
 	Tracing,
+	type FunctionOptions,
 } from "aws-cdk-lib/aws-lambda";
-import { fileURLToPath } from "url";
+import type { LogGroup } from "aws-cdk-lib/aws-logs";
+import { fileURLToPath } from "node:url";
 
-import { manifest, prerendered } from "MANIFEST_DEST";
-import { LogGroup } from "aws-cdk-lib/aws-logs";
+import { appPath, assets, base, prerendered } from "MANIFEST_DEST";
 
 export interface SvelteKitProps extends FunctionOptions {
 	readonly domainNames?: string[];
@@ -60,9 +60,7 @@ export class SvelteKit extends Construct {
 
 		this.function = new NodejsFunction(this, "Server", {
 			...props,
-			entry: fileURLToPath(
-				new URL("./server/handler.esm.js", import.meta.url).href,
-			),
+			entry: fileURLToPath(new URL("./server/handler.esm.js", import.meta.url)),
 			bundling: {
 				...props.bundling,
 				minify: true,
@@ -71,11 +69,13 @@ export class SvelteKit extends Construct {
 				metafile: true,
 				loader: {
 					".node": "file",
+					...props.bundling?.loader,
 				},
 				format: OutputFormat.ESM,
 				mainFields: ["module", "main"],
 				esbuildArgs: {
 					"--conditions": "module",
+					...props.bundling?.esbuildArgs,
 				},
 			},
 		});
@@ -92,7 +92,7 @@ export class SvelteKit extends Construct {
 			ephemeralStorageSize: Size.gibibytes(5),
 			memoryLimit: 1024,
 			sources: [
-				Source.asset(fileURLToPath(new URL("./client", import.meta.url).href)),
+				Source.asset(fileURLToPath(new URL("./client", import.meta.url))),
 			],
 			cacheControl: [
 				CacheControl.setPublic(),
@@ -114,7 +114,7 @@ export class SvelteKit extends Construct {
 				memoryLimit: 1024,
 				sources: [
 					Source.asset(
-						fileURLToPath(new URL("./prerendered", import.meta.url).href),
+						fileURLToPath(new URL("./prerendered", import.meta.url)),
 					),
 				],
 				cacheControl: [
@@ -150,27 +150,33 @@ export class SvelteKit extends Construct {
 						eventType: FunctionEventType.VIEWER_REQUEST,
 						function: new Function(this, "XForwardHost", {
 							code: FunctionCode.fromInline(`
-                function handler(event) {
-                  var request = event.request;
-                  request.headers["x-forwarded-host"] = { value: request.headers.host.value };
-                  return request;
-                }
-              `),
+								function handler(event) {
+									var request = event.request;
+									request.headers["x-forwarded-host"] = {
+										value: request.headers.host.value
+									};
+									request.headers["x-forwarded-proto"] = {
+										value: "https"
+									};
+									return request;
+								}
+							`),
 						}),
 					},
 				],
 			},
 		});
 
-		this.cloudFront.addBehavior(`${manifest.appDir}/*`, clientBucketOrigin, {
+		this.cloudFront.addBehavior(`${appPath}/*`, clientBucketOrigin, {
 			viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
 			originRequestPolicy: OriginRequestPolicy.CORS_S3_ORIGIN,
 			allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
 		});
 
-		manifest.assets.forEach((asset) => {
-			if (asset.toLowerCase() !== ".ds_store") {
-				this.cloudFront.addBehavior(asset, clientBucketOrigin, {
+		assets.forEach((asset) => {
+			const path = asset.replace(/^\/+/, "");
+			if (path.toLowerCase() !== ".ds_store") {
+				this.cloudFront.addBehavior(`${base}/${path}`, clientBucketOrigin, {
 					viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
 					originRequestPolicy: OriginRequestPolicy.CORS_S3_ORIGIN,
 					allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
@@ -180,19 +186,19 @@ export class SvelteKit extends Construct {
 
 		const rewritePrerenderPath = new Function(this, "RewritePrerenderPath", {
 			code: FunctionCode.fromInline(`
-        function handler(event) {
-          var request = event.request;
-          var lastSegment = request.uri.split('/').pop();
-          if (lastSegment && lastSegment.includes('.')) {
-            return request;
-          }
-          if (request.uri.endsWith('/')) {
-            request.uri += "index";
-          }
-          request.uri += ".html";
-          return request;
-        }
-      `),
+				function handler(event) {
+					var request = event.request;
+					var lastSegment = request.uri.split("/").pop();
+					if (lastSegment && lastSegment.includes(".")) {
+						return request;
+					}
+					if (request.uri.endsWith("/")) {
+						request.uri += "index";
+					}
+					request.uri += ".html";
+					return request;
+				}
+			`),
 		});
 
 		prerendered.forEach((asset) => {
@@ -234,7 +240,7 @@ export class SvelteKitEdge extends Construct {
 			architecture: Architecture.X86_64,
 			tracing: Tracing.DISABLED,
 			entry: fileURLToPath(
-				new URL("./server/edge-handler.esm.js", import.meta.url).href,
+				new URL("./server/edge-handler.esm.js", import.meta.url),
 			),
 			bundling: {
 				...props.bundling,
@@ -244,11 +250,13 @@ export class SvelteKitEdge extends Construct {
 				metafile: true,
 				loader: {
 					".node": "file",
+					...props.bundling?.loader,
 				},
 				format: OutputFormat.ESM,
 				mainFields: ["module", "main"],
 				esbuildArgs: {
 					"--conditions": "module",
+					...props.bundling?.esbuildArgs,
 				},
 			},
 		});
@@ -263,7 +271,7 @@ export class SvelteKitEdge extends Construct {
 			ephemeralStorageSize: Size.gibibytes(5),
 			memoryLimit: 1024,
 			sources: [
-				Source.asset(fileURLToPath(new URL("./client", import.meta.url).href)),
+				Source.asset(fileURLToPath(new URL("./client", import.meta.url))),
 			],
 			cacheControl: [
 				CacheControl.setPublic(),
@@ -285,7 +293,7 @@ export class SvelteKitEdge extends Construct {
 				memoryLimit: 1024,
 				sources: [
 					Source.asset(
-						fileURLToPath(new URL("./prerendered", import.meta.url).href),
+						fileURLToPath(new URL("./prerendered", import.meta.url)),
 					),
 				],
 				cacheControl: [
@@ -345,27 +353,33 @@ export class SvelteKitEdge extends Construct {
 						eventType: FunctionEventType.VIEWER_REQUEST,
 						function: new Function(this, "ForwardHost", {
 							code: FunctionCode.fromInline(`
-                function handler(event) {
-                  var request = event.request;
-                  request.headers["cloudfront-forwarded-host"] = { value: request.headers.host.value };
-                  return request;
-                }
-              `),
+								function handler(event) {
+									var request = event.request;
+									request.headers["cloudfront-forwarded-host"] = {
+										value: request.headers.host.value
+									};
+									request.headers["x-forwarded-proto"] = {
+										value: "https"
+									};
+									return request;
+								}
+							`),
 						}),
 					},
 				],
 			},
 		});
 
-		this.cloudFront.addBehavior(`${manifest.appDir}/*`, clientBucketOrigin, {
+		this.cloudFront.addBehavior(`${appPath}/*`, clientBucketOrigin, {
 			viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
 			originRequestPolicy: OriginRequestPolicy.CORS_S3_ORIGIN,
 			allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
 		});
 
-		manifest.assets.forEach((asset) => {
-			if (asset.toLowerCase() !== ".ds_store") {
-				this.cloudFront.addBehavior(asset, clientBucketOrigin, {
+		assets.forEach((asset) => {
+			const path = asset.replace(/^\/+/, "");
+			if (path.toLowerCase() !== ".ds_store") {
+				this.cloudFront.addBehavior(`${base}/${path}`, clientBucketOrigin, {
 					viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
 					originRequestPolicy: OriginRequestPolicy.CORS_S3_ORIGIN,
 					allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
@@ -375,19 +389,19 @@ export class SvelteKitEdge extends Construct {
 
 		const rewritePrerenderPath = new Function(this, "RewritePrerenderPath", {
 			code: FunctionCode.fromInline(`
-        function handler(event) {
-          var request = event.request;
-          var lastSegment = request.uri.split('/').pop();
-          if (lastSegment && lastSegment.includes('.')) {
-            return request;
-          }
-          if (request.uri.endsWith('/')) {
-            request.uri += "index";
-          }
-          request.uri += ".html";
-          return request;
-        }
-      `),
+				function handler(event) {
+					var request = event.request;
+					var lastSegment = request.uri.split("/").pop();
+					if (lastSegment && lastSegment.includes(".")) {
+						return request;
+					}
+					if (request.uri.endsWith("/")) {
+						request.uri += "index";
+					}
+					request.uri += ".html";
+					return request;
+				}
+			`),
 		});
 
 		prerendered.forEach((asset) => {

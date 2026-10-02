@@ -1,5 +1,5 @@
-import { Server } from "SERVER_DEST";
-import { manifest } from "MANIFEST_DEST";
+import { pipeline } from "node:stream/promises";
+import { server } from "SERVER_DEST";
 
 const HOP_BY_HOP = new Set([
 	"connection",
@@ -13,82 +13,98 @@ const HOP_BY_HOP = new Set([
 	"content-length",
 ]);
 
-const SERVER = new Server(manifest);
-await SERVER.init({ env: process.env as any });
+await server.init({ env: process.env });
 
 export const handler = awslambda.streamifyResponse(
 	async (event, responseStream) => {
 		const method = event.requestContext.http.method;
+		const headers = event.headers || {};
+
+		const origin = `${headers["x-forwarded-proto"] || "https"}://${
+			headers["x-forwarded-host"] || headers.host
+		}`;
 
 		const url = new URL(
-			`${event.rawPath}${
+			`${origin}${event.rawPath}${
 				event.rawQueryString ? `?${event.rawQueryString}` : ""
-			}`,
-			`${event.headers["x-forwarded-proto"] || "https"}://${
-				event.headers["x-forwarded-host"] || event.headers.host
 			}`,
 		);
 
-		let body: any = undefined;
-		if (method !== "GET" && method !== "DELETE" && event.body != null) {
+		let body: BodyInit | undefined;
+		if (method !== "GET" && method !== "HEAD" && event.body != null) {
 			body = event.isBase64Encoded
 				? Buffer.from(event.body, "base64")
 				: event.body;
 		}
 
 		const requestHeaders = new Headers();
-		for (const [k, v] of Object.entries(event.headers || {})) {
-			if (!HOP_BY_HOP.has(k.toLowerCase()))
-				requestHeaders.append(k, v as string);
+		const connectionHeaders = new Set(
+			(headers.connection || "")
+				.split(",")
+				.map((name: string) => name.trim().toLowerCase()),
+		);
+
+		for (const [k, v] of Object.entries(headers)) {
+			const name = k.toLowerCase();
+
+			if (
+				typeof v === "string" &&
+				!HOP_BY_HOP.has(name) &&
+				!connectionHeaders.has(name)
+			) {
+				requestHeaders.append(k, v);
+			}
 		}
 
-		const request = new Request(url, { method, body, headers: requestHeaders });
+		if (event.cookies?.length) {
+			requestHeaders.set("cookie", event.cookies.join("; "));
+		}
 
-		const response = await SERVER.respond(request, {
+		const request = new Request(url, {
+			method,
+			body,
+			headers: requestHeaders,
+		});
+
+		const response = await server.respond(request, {
 			getClientAddress: () => event.requestContext.http.sourceIp,
 		});
 
 		const responseHeaders: Record<string, string> = {};
+		const responseConnectionHeaders = new Set(
+			(response.headers.get("connection") || "")
+				.split(",")
+				.map((name) => name.trim().toLowerCase()),
+		);
+
 		for (const [k, v] of response.headers) {
 			const name = k.toLowerCase();
-			if (HOP_BY_HOP.has(name)) continue;
-			if (name === "set-cookie") continue;
+
+			if (
+				HOP_BY_HOP.has(name) ||
+				responseConnectionHeaders.has(name) ||
+				name === "set-cookie"
+			) {
+				continue;
+			}
+
 			responseHeaders[name] = v;
 		}
-
-		const responseCookies =
-			typeof response.headers.getSetCookie === "function"
-				? response.headers.getSetCookie()
-				: [];
 
 		responseStream = awslambda.HttpResponseStream.from(responseStream, {
 			statusCode: response.status,
 			headers: responseHeaders,
-			cookies: responseCookies,
+			cookies: response.headers.getSetCookie(),
 		});
 
 		responseStream.write("");
 
-		if (!response.body) {
-			responseStream.end();
+		if (method === "HEAD") {
+			await response.body?.cancel();
+			await pipeline([], responseStream);
 			return;
 		}
 
-		if (response.body.locked) {
-			responseStream.end();
-			return;
-		}
-
-		const reader = response.body.getReader();
-
-		for (
-			let chunk = await reader.read();
-			!chunk.done;
-			chunk = await reader.read()
-		) {
-			responseStream.write(chunk.value);
-		}
-
-		responseStream.end();
+		await pipeline(response.body ?? [], responseStream);
 	},
 );
