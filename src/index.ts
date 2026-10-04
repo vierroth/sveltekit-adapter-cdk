@@ -189,10 +189,14 @@ export default function ({
 				writeFileSync(
 					join(serverDirectory, "manifest.js"),
 					[
+						`export const appPath = ${JSON.stringify(builder.getAppPath())};`,
+						`export const assets = ${JSON.stringify(
+							builder.manifest.assets.map((a) => a.path),
+						)};`,
+						`export const base = ${JSON.stringify(base)};`,
 						`export const prerendered = new Set(${JSON.stringify(
 							builder.prerendered.paths,
 						)});`,
-						`export const base = ${JSON.stringify(base)};`,
 						"",
 					].join("\n"),
 					"utf8",
