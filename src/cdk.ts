@@ -152,12 +152,7 @@ export class SvelteKit extends Construct {
 							code: FunctionCode.fromInline(`
 								function handler(event) {
 									var request = event.request;
-									request.headers["x-forwarded-host"] = {
-										value: request.headers.host.value
-									};
-									request.headers["x-forwarded-proto"] = {
-										value: "https"
-									};
+									request.headers["x-forwarded-host"] = { value: request.headers.host.value };
 									return request;
 								}
 							`),
@@ -355,12 +350,7 @@ export class SvelteKitEdge extends Construct {
 							code: FunctionCode.fromInline(`
 								function handler(event) {
 									var request = event.request;
-									request.headers["cloudfront-forwarded-host"] = {
-										value: request.headers.host.value
-									};
-									request.headers["x-forwarded-proto"] = {
-										value: "https"
-									};
+									request.headers["cloudfront-forwarded-host"] = { value: request.headers.host.value };
 									return request;
 								}
 							`),
